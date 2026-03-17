@@ -2,8 +2,7 @@
 #define NARGS 4
 #endif
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	// Your code here
 
