@@ -130,7 +130,7 @@ obtener_numero(int argc, char *argv[])
 	} else if (*pos_final != '\0') {
 		printf("El argumento contiene caracteres inválidos. Recuerde "
 		       "insertar un número entero\n");
-		printf("Ejecutar el programa con la siguiente interfaz: $ "
+		printf("Ejecutar el programa con el siguiente formato: $ "
 		       "./primes <n>\n");
 		exit(-1);
 	}
