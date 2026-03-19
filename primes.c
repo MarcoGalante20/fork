@@ -13,8 +13,7 @@
 #define ESCRITURA 1
 
 
-void
-verificar_resultado_lectura(int resultado)
+void verificar_resultado_lectura(int resultado)
 {
 	if (resultado < 0) {
 		printf("Error en la lectura de uno de los filtros\n");
@@ -22,25 +21,20 @@ verificar_resultado_lectura(int resultado)
 	}
 }
 
-void
-pasar_numeros(int *pipe_izq_fds, int *pipe_der_fds, int primo)
+
+void pasar_numeros(int *pipe_izq_fds, int *pipe_der_fds, int primo)
 {
 	int candidato;
 	int res_pipe_der;
 	int res_pipe_izq = 1;
 
-	while (res_pipe_izq != 0) {
-		res_pipe_izq =
-		        read(pipe_izq_fds[LECTURA], &candidato, sizeof(candidato));
+	while ((res_pipe_izq = read(pipe_izq_fds[LECTURA], &candidato, sizeof(candidato))) != 0) {
 		verificar_resultado_lectura(res_pipe_izq);
 
-		if (((candidato % primo) != 0) && res_pipe_izq != 0) {
-			res_pipe_der = write(pipe_der_fds[ESCRITURA],
-			                     &candidato,
-			                     sizeof(candidato));
+		if ((candidato % primo) != 0) {
+			res_pipe_der = write(pipe_der_fds[ESCRITURA], &candidato, sizeof(candidato));
 			if (res_pipe_der < 0) {
-				printf("Error en la escritura de uno de los "
-				       "filtros\n");
+				printf("Error en la escritura de uno de los filtros\n");
 				exit(-1);
 			}
 		}
@@ -51,34 +45,31 @@ pasar_numeros(int *pipe_izq_fds, int *pipe_der_fds, int primo)
 }
 
 
-void
-imprimir_primos_restantes(int *pipe_izq_fds)
+void imprimir_primos_restantes(int *pipe_izq_fds)
 {
 	int primo_restante;
 	int resultado = 1;
 
-	while (resultado != 0) {
-		resultado = read(pipe_izq_fds[LECTURA],
-		                 &primo_restante,
-		                 sizeof(primo_restante));
+	while((resultado = read(pipe_izq_fds[LECTURA], &primo_restante, sizeof(primo_restante))) != 0) {
 		verificar_resultado_lectura(resultado);
-		if (resultado != 0) {
-			printf("primo %d\n", primo_restante);
-		}
+		printf("primo %d\n", primo_restante);
 	}
 
 	close(pipe_izq_fds[LECTURA]);
 }
 
 
-void
-ejecutar_filtro(int *pipe_izq_fds, long n)
+void ejecutar_filtro(int *pipe_izq_fds, long n)
 {
 	close(pipe_izq_fds[ESCRITURA]);
 
 	int primo;
 
 	int resultado = read(pipe_izq_fds[LECTURA], &primo, sizeof(primo));
+	if (resultado == 0) {
+		close(pipe_izq_fds[LECTURA]);
+		exit(0);
+	}
 	verificar_resultado_lectura(resultado);
 
 	printf("primo %d\n", primo);
@@ -103,6 +94,7 @@ ejecutar_filtro(int *pipe_izq_fds, long n)
 		// PROCESO HIJO
 		close(pipe_izq_fds[LECTURA]);
 		ejecutar_filtro(pipe_der_fds, n);
+		exit(0);
 	} else {
 		// PROCESO PADRE
 		close(pipe_der_fds[LECTURA]);
@@ -111,13 +103,12 @@ ejecutar_filtro(int *pipe_izq_fds, long n)
 	}
 }
 
-long
-obtener_numero(int argc, char *argv[])
+
+long obtener_numero(int argc, char *argv[])
 {
 	if (argc != CANTIDAD_NECESARIA_ARG) {
 		printf("Cantidad de argumentos inválida\n");
-		printf("Ejecutar el programa con la siguiente interfaz: $ "
-		       "./primes <n>\n");
+		printf("Ejecutar el programa con la siguiente interfaz: $ ./primes <n>\n");
 		exit(-1);
 	}
 
@@ -127,11 +118,11 @@ obtener_numero(int argc, char *argv[])
 	if ((n == LONG_MAX || n == LONG_MIN) && errno == ERANGE) {
 		printf("El número recibido se excede del rango permitido\n");
 		exit(-1);
-	} else if (*pos_final != '\0') {
-		printf("El argumento contiene caracteres inválidos. Recuerde "
-		       "insertar un número entero\n");
-		printf("Ejecutar el programa con el siguiente formato: $ "
-		       "./primes <n>\n");
+	} else if (n < 2) {
+		exit(0);
+	} else if (pos_final == argv[INDICE_N]) {
+		printf("El argumento contiene caracteres inválidos. Recuerde insertar un número entero\n");
+		printf("Ejecutar el programa con la siguiente interfaz: $ ./primes <n>\n");
 		exit(-1);
 	}
 
@@ -139,8 +130,7 @@ obtener_numero(int argc, char *argv[])
 }
 
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	long n = obtener_numero(argc, argv);
 
@@ -161,6 +151,7 @@ main(int argc, char *argv[])
 	if (id_hijo == 0) {
 		// PROCESO HIJO
 		ejecutar_filtro(primer_pipe_fds, n);
+		exit(0);
 	} else {
 		// PROCESO PADRE
 		close(primer_pipe_fds[LECTURA]);
@@ -169,12 +160,9 @@ main(int argc, char *argv[])
 
 		for (int i = 2; i <= n; i++) {
 			candidato = i;
-			resultado = write(primer_pipe_fds[ESCRITURA],
-			                  &candidato,
-			                  sizeof(candidato));
+			resultado = write(primer_pipe_fds[ESCRITURA], &candidato, sizeof(candidato));
 			if (resultado < 0) {
-				printf("Error en la escritura del primer "
-				       "proceso\n");
+				printf("Error en la escritura del primer proceso\n");
 				exit(-1);
 			}
 		}
