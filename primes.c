@@ -120,7 +120,7 @@ long obtener_numero(int argc, char *argv[])
 		exit(-1);
 	} else if (n < 2) {
 		exit(0);
-	} else if (pos_final == argv[INDICE_N]) {
+	} else if (pos_final == argv[INDICE_N] || *pos_final != '\0') {
 		printf("El argumento contiene caracteres inválidos. Recuerde insertar un número entero\n");
 		printf("Ejecutar el programa con la siguiente interfaz: $ ./primes <n>\n");
 		exit(-1);
